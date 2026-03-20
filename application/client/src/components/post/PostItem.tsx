@@ -24,7 +24,6 @@ export const PostItem = ({ post }: Props) => {
               <img
                 alt={post.user.profileImage.alt}
                 src={getProfileImagePath(post.user.profileImage.id)}
-                loading="lazy"
               />
             </Link>
           </div>
