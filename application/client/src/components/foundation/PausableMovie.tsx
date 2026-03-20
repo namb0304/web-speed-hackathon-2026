@@ -12,7 +12,8 @@ interface Props {
  * クリックすると再生・一時停止を切り替えます。
  */
 export const PausableMovie = ({ src }: Props) => {
-  const [isPlaying, setIsPlaying] = useState(true);
+  // null = 未読み込み, true = 再生中, false = 一時停止中
+  const [isPlaying, setIsPlaying] = useState<boolean | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -36,6 +37,10 @@ export const PausableMovie = ({ src }: Props) => {
 
   const handleClick = useCallback(() => {
     setIsPlaying((prev) => {
+      if (prev === null) {
+        // 初回クリック: GIF の読み込みを開始 (src がセットされる)
+        return true;
+      }
       if (prev) {
         // 一時停止: 現在のフレームを canvas にキャプチャ
         captureFrame();
@@ -52,29 +57,28 @@ export const PausableMovie = ({ src }: Props) => {
         onClick={handleClick}
         type="button"
       >
-        {/* GIF をブラウザネイティブで表示 (fetchBinary 不要) */}
+        {/* クリック後にのみ src をセットして GIF を読み込む */}
         <img
           ref={imgRef}
-          src={src}
+          src={isPlaying !== null ? src : undefined}
           alt=""
-          className={classNames("w-full h-full object-cover", { hidden: !isPlaying })}
-          loading="lazy"
+          className={classNames("w-full h-full object-cover", { hidden: isPlaying !== true })}
           onLoad={handleLoad}
         />
         {/* 一時停止中は canvas にキャプチャしたフレームを表示 */}
         <canvas
           ref={canvasRef}
-          className={classNames("w-full h-full object-cover", { hidden: isPlaying })}
+          className={classNames("w-full h-full object-cover", { hidden: isPlaying !== false })}
         />
         <div
           className={classNames(
             "absolute left-1/2 top-1/2 flex items-center justify-center w-16 h-16 text-cax-surface-raised text-3xl bg-cax-overlay/50 rounded-full -translate-x-1/2 -translate-y-1/2",
             {
-              "opacity-0 group-hover:opacity-100": isPlaying,
+              "opacity-0 group-hover:opacity-100": isPlaying === true,
             },
           )}
         >
-          <FontAwesomeIcon iconType={isPlaying ? "pause" : "play"} styleType="solid" />
+          <FontAwesomeIcon iconType={isPlaying === true ? "pause" : "play"} styleType="solid" />
         </div>
       </button>
     </AspectRatioBox>
