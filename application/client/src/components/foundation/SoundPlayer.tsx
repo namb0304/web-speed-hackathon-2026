@@ -16,29 +16,47 @@ export const SoundPlayer = ({ sound }: Props) => {
   }, []);
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  // null = 未読み込み, true = 再生中, false = 一時停止中
+  const [isPlaying, setIsPlaying] = useState<boolean | null>(null);
   const handleTogglePlaying = useCallback(() => {
-    setIsPlaying((isPlaying) => {
-      if (isPlaying) {
+    setIsPlaying((prev) => {
+      if (prev === null) {
+        // 初回クリック: src がセットされ onCanPlay で再生開始
+        return true;
+      }
+      if (prev) {
         audioRef.current?.pause();
       } else {
         audioRef.current?.play();
       }
-      return !isPlaying;
+      return !prev;
     });
   }, []);
+
+  const handleCanPlay = useCallback(() => {
+    if (isPlaying === true) {
+      audioRef.current?.play();
+    }
+  }, [isPlaying]);
 
   return (
     <div className="bg-cax-surface-subtle flex h-full w-full items-center justify-center">
       {/* preload="none" でページロード時に音声データを取得しない */}
-      <audio ref={audioRef} loop={true} onTimeUpdate={handleTimeUpdate} preload="none" src={getSoundPath(sound.id)} />
+      <audio
+        ref={audioRef}
+        loop={true}
+        onTimeUpdate={handleTimeUpdate}
+        onCanPlay={handleCanPlay}
+        preload="none"
+        src={isPlaying !== null ? getSoundPath(sound.id) : undefined}
+      />
       <div className="p-2">
         <button
           className="bg-cax-accent text-cax-surface-raised flex h-8 w-8 items-center justify-center rounded-full text-sm hover:opacity-75"
           onClick={handleTogglePlaying}
           type="button"
         >
-          <FontAwesomeIcon iconType={isPlaying ? "pause" : "play"} styleType="solid" />
+          <FontAwesomeIcon iconType={isPlaying === true ? "pause" : "play"} styleType="solid" />
         </button>
       </div>
       <div className="flex h-full min-w-0 shrink grow flex-col pt-2">
